@@ -1,11 +1,11 @@
 
-SRC = a.c
-MAIN = test
+SRC = $(wildcard *.c)
+TARGETS = $(SRC:%.c=%)
 
-$(MAIN): $(SRC)
+$(TARGETS): $(SRC)
 	$(CC) $(^) -o $(@)
 	./$(@)
 
 clean:
-	rm -f $(MAIN)
+	rm -f $(TARGETS)
 
