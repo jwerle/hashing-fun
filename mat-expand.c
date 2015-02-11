@@ -23,14 +23,19 @@ encode (const char *key,
 
   uint32_t a = 0;
   uint32_t b = 0;
+  uint32_t c = 0;
   size_t size = 0;
   int i = 0;
 
   while (0 != in[i]) {
-    a = in[i++];
-    b = in[i++];
-    out[size++] = (a + b) % len;
+    a = in[i];
+    b = in[i+1];
+    c = mat[i][i];
+    out[size++] = (a << 16) | (b << 8);
+    i += 2;
   }
+
+  out[size] = 0;
 
   return size;
 }
@@ -42,23 +47,40 @@ decode (const char *key,
         uint32_t *in,
         uint32_t out[]) {
 
+  uint32_t a = 0;
+  uint32_t b = 0;
+  uint32_t c = 0;
+  uint32_t buf = 0;
   size_t size = 0;
+  int i = 0;
+
+  while (0 != in[i]) {
+    c = mat[i][i];
+    buf = in[i++];
+    out[size++] = buf >> 16 & 0xff;
+    out[size++] = buf >> 8 & 0xff;
+  }
+
+  out[size] = 0;
+
   return size;
 }
 
 int
 main (void) {
   const char *key = "apple";
-  uint32_t len = 0xff;
+  uint32_t len = 0xf;
   uint32_t mat[len][len];
-  uint32_t out[BUFSIZ];
-  uint32_t in[] = {'k', 'i', 'n', 'k', 'a', 'j', 'o', 'u', 0};
+  uint32_t enc[BUFSIZ];
+  uint32_t dec[BUFSIZ];
+  uint32_t in[] = {'k', 'i', 'n', 'k', 'a', 'j', 'o', 'u', 'z', 'z', 'z', '!', '?', 0};
   size_t size = 0;
+
+  printf("in=(%ls)\n", (int *) in);
 
   generate(len, mat);
 
   do {
-    break;
 
     int x = 0;
     int y = 0;
@@ -71,15 +93,19 @@ main (void) {
     }
   } while (0);
 
-  size = encode(key, len, mat, in, out);
+  size = encode(key, len, mat, in, enc);
 
-  {
+  do {
+
     int i = 0;
     for (; i < size; ++i) {
-      printf("%u ", out[i]);
+      printf("%u ", enc[i]);
     }
     printf("\n");
-  }
+  } while (0);
+
+  size = decode(key, len, mat, enc, dec);
+  printf("dec=(%ls)\n", (int *) dec);
 
   return 0;
 }
